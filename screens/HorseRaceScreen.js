@@ -9,7 +9,9 @@ import {
   SafeAreaView,
   Alert,
   ScrollView,
-  Easing
+  Easing,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
@@ -342,20 +344,6 @@ export default function HorseRaceScreen({
             <View style={styles.progressTrack} />
             <Text style={styles.progressText}>{Math.min(100, Math.round(progressValue))}%</Text>
           </View>
-          
-          {/* Индикаторы */}
-          <View style={styles.indicators}>
-            {isSelected && (
-              <View style={styles.selectedIndicator}>
-                <Text style={styles.selectedIndicatorText}>TWÓJ WYBÓR</Text>
-              </View>
-            )}
-            {isWinner && (
-              <View style={styles.winnerIndicator}>
-                <Text style={styles.winnerIndicatorText}>🏆 ZWYCIĘZCA</Text>
-              </View>
-            )}
-          </View>
         </View>
       </View>
     );
@@ -365,143 +353,165 @@ export default function HorseRaceScreen({
   const quickBets = [10, 25, 50, 100, 250, 500];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Шапка */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>‹</Text>
-          </TouchableOpacity>
-          <View style={styles.headerInfo}>
-            <Text style={styles.title}>🏇 WYŚCIGI JĘZYKÓW</Text>
-            <View style={styles.balanceContainer}>
-              <Text style={styles.balanceLabel}>BALANS:</Text>
-              <Text style={styles.balanceAmount}>{balance.toLocaleString()} 💰</Text>
-            </View>
-          </View>
-          <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.profileButton}>
-            <Text style={styles.profileButtonText}>👤</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Основное поле гонки */}
-        <ScrollView style={styles.raceArea} showsVerticalScrollIndicator={false}>
-          {/* Заголовок */}
-          <View style={styles.raceHeader}>
-            <Text style={styles.raceTitle}>PROGRAMMING GRAND PRIX</Text>
-            <Text style={styles.raceSubtitle}>Który język wygra dzisiaj?</Text>
-          </View>
-
-          {/* Информация о текущей rundzie */}
-          {raceStarted && (
-            <View style={styles.roundInfo}>
-              <Text style={styles.roundText}>RUNDA {currentRound}/4</Text>
-              <View style={styles.roundProgress}>
-                <View style={[styles.roundProgressFill, { width: `${(currentRound / 4) * 100}%` }]} />
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+          {/* Шапка */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={styles.backButtonText}>‹</Text>
+            </TouchableOpacity>
+            <View style={styles.headerInfo}>
+              <Text style={styles.title}>🏇 WYŚCIGI JĘZYKÓW</Text>
+              <View style={styles.balanceContainer}>
+                <Text style={styles.balanceLabel}>BALANS:</Text>
+                <Text style={styles.balanceAmount}>{balance.toLocaleString()} 💰</Text>
               </View>
             </View>
-          )}
-
-          {/* Дорожки */}
-          <View style={styles.tracksContainer}>
-            {raceLanguages.map((language, index) => renderTrack(language, index))}
+            <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.homeButton}>
+              <Text style={styles.homeButtonText}>🏠</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Результаты */}
-          {showResults && (
-            <View style={styles.resultsCard}>
-              <Text style={styles.resultsTitle}>🏁 WYNIKI WYŚCIGU</Text>
-              <View style={styles.resultsList}>
-                {finalResults.map((result, index) => (
-                  <View key={index} style={styles.resultItem}>
-                    <Text style={styles.resultRound}>Runda {index + 1}:</Text>
-                    <Text style={styles.resultWinner}>
-                      {raceLanguages.find(l => l.name === result)?.icon} {result}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-              <Text style={styles.finalWinner}>
-                🏆 ZWYCIĘZCA: {winner}
-              </Text>
+          {/* Основное поле гонки */}
+          <ScrollView 
+            style={styles.raceArea} 
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.raceContent}
+          >
+            {/* Заголовок */}
+            <View style={styles.raceHeader}>
+              <Text style={styles.raceTitle}>PROGRAMMING GRAND PRIX</Text>
+              <Text style={styles.raceSubtitle}>Który język wygra dzisiaj?</Text>
             </View>
-          )}
 
-          {/* Индикатор выигрыша */}
-          {winAmount > 0 && (
-            <Animated.View style={[styles.winContainer, { transform: [{ scale: winScale }] }]}>
-              <View style={styles.winInner}>
-                <Text style={styles.winText}>+{winAmount} 💰</Text>
-                <Text style={styles.winSubtext}>WYGRANA!</Text>
+            {/* Информация о текущей rundzie */}
+            {raceStarted && (
+              <View style={styles.roundInfo}>
+                <Text style={styles.roundText}>RUNDA {currentRound}/4</Text>
+                <View style={styles.roundProgress}>
+                  <View style={[styles.roundProgressFill, { width: `${(currentRound / 4) * 100}%` }]} />
+                </View>
               </View>
-            </Animated.View>
-          )}
-        </ScrollView>
+            )}
 
-        {/* Панель управления */}
-        <View style={styles.controlPanel}>
-          {!raceStarted ? (
-            <View style={styles.bettingPanel}>
-              {/* Выбор языка */}
-              <View style={styles.selectionSection}>
+            {/* Дорожки */}
+            <View style={styles.tracksContainer}>
+              {raceLanguages.map((language, index) => renderTrack(language, index))}
+            </View>
+
+            {/* Результаты */}
+            {showResults && (
+              <View style={styles.resultsCard}>
+                <Text style={styles.resultsTitle}>🏁 WYNIKI WYŚCIGU</Text>
+                <View style={styles.resultsList}>
+                  {finalResults.map((result, index) => (
+                    <View key={index} style={styles.resultItem}>
+                      <Text style={styles.resultRound}>Runda {index + 1}:</Text>
+                      <Text style={styles.resultWinner}>
+                        {raceLanguages.find(l => l.name === result)?.icon} {result}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                <Text style={styles.finalWinner}>
+                  🏆 ZWYCIĘZCA: {winner}
+                </Text>
+              </View>
+            )}
+
+            {/* Индикатор выигрыша */}
+            {winAmount > 0 && (
+              <Animated.View style={[styles.winContainer, { transform: [{ scale: winScale }] }]}>
+                <View style={styles.winInner}>
+                  <Text style={styles.winText}>+{winAmount} 💰</Text>
+                  <Text style={styles.winSubtext}>WYGRANA!</Text>
+                </View>
+              </Animated.View>
+            )}
+          </ScrollView>
+
+          {/* Панель управления с УДОБНЫМИ КНОПКАМИ */}
+          <View style={styles.controlPanel}>
+            {!raceStarted ? (
+              <View style={styles.bettingPanel}>
+                {/* Выбор языка - БОЛЬШИЕ КНОПКИ */}
                 <Text style={styles.sectionTitle}>WYBIERZ JĘZYK:</Text>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.languageScroll}
-                >
+                <View style={styles.languageGrid}>
                   {raceLanguages.map((language) => (
                     <TouchableOpacity
                       key={language.id}
                       style={[
-                        styles.languageButton,
+                        styles.languageButtonBig,
                         { borderColor: language.color },
                         selectedLanguage === language.name && styles.languageButtonSelected
                       ]}
                       onPress={() => setSelectedLanguage(language.name)}
                     >
-                      <View style={styles.languageButtonContent}>
-                        <Text style={[styles.languageButtonIcon, { color: language.color }]}>
-                          {language.icon}
-                        </Text>
-                        <Text style={styles.languageButtonName}>{language.name}</Text>
-                        <Text style={styles.languageButtonOdds}>{odds[language.name]}x</Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-
-              {/* Выбор ставки */}
-              <View style={styles.betSection}>
-                <Text style={styles.sectionTitle}>WYBIERZ STAWKĘ:</Text>
-                
-                {/* Быстрые ставки */}
-                <View style={styles.quickBetsContainer}>
-                  {quickBets.map((amount) => (
-                    <TouchableOpacity
-                      key={amount}
-                      style={[
-                        styles.quickBetButton,
-                        bet === amount && styles.quickBetButtonSelected,
-                        amount > balance && styles.quickBetButtonDisabled
-                      ]}
-                      onPress={() => setBet(amount)}
-                      disabled={amount > balance}
-                    >
-                      <Text style={[
-                        styles.quickBetText,
-                        bet === amount && styles.quickBetTextSelected
-                      ]}>
-                        {amount}💰
+                      <Text style={[styles.languageButtonIconBig, { color: language.color }]}>
+                        {language.icon}
                       </Text>
+                      <Text style={styles.languageButtonNameBig}>{language.name}</Text>
+                      <Text style={styles.languageButtonOddsBig}>{odds[language.name]}x</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
 
+                {/* Выбор ставки - БОЛЬШИЕ УДОБНЫЕ КНОПКИ */}
+                <Text style={styles.sectionTitle}>WYBIERZ STAWKĘ:</Text>
+                
+                {/* Быстрые ставки - 2 строки больших кнопок */}
+                <View style={styles.quickBetsGrid}>
+                  <View style={styles.quickBetsRow}>
+                    {quickBets.slice(0, 3).map((amount) => (
+                      <TouchableOpacity
+                        key={amount}
+                        style={[
+                          styles.quickBetButtonBig,
+                          bet === amount && styles.quickBetButtonSelected,
+                          amount > balance && styles.quickBetButtonDisabled
+                        ]}
+                        onPress={() => setBet(amount)}
+                        disabled={amount > balance}
+                      >
+                        <Text style={[
+                          styles.quickBetTextBig,
+                          bet === amount && styles.quickBetTextSelected
+                        ]}>
+                          {amount}💰
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <View style={styles.quickBetsRow}>
+                    {quickBets.slice(3).map((amount) => (
+                      <TouchableOpacity
+                        key={amount}
+                        style={[
+                          styles.quickBetButtonBig,
+                          bet === amount && styles.quickBetButtonSelected,
+                          amount > balance && styles.quickBetButtonDisabled
+                        ]}
+                        onPress={() => setBet(amount)}
+                        disabled={amount > balance}
+                      >
+                        <Text style={[
+                          styles.quickBetTextBig,
+                          bet === amount && styles.quickBetTextSelected
+                        ]}>
+                          {amount}💰
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
                 {/* Кастомная ставка */}
-                <View style={styles.customBetContainer}>
-                  <View style={styles.customBetInputContainer}>
+                <View style={styles.customBetSection}>
+                  <View style={styles.customBetRow}>
                     <Text style={styles.customBetLabel}>WŁASNA STAWKA:</Text>
                     <View style={styles.customBetInputWrapper}>
                       <Text style={styles.customBetPrefix}>💰</Text>
@@ -509,149 +519,121 @@ export default function HorseRaceScreen({
                         {customBet || '0'}
                       </Text>
                     </View>
-                  </View>
-                  <TouchableOpacity 
-                    style={[
-                      styles.customBetButton,
-                      (!customBet || parseInt(customBet) <= 0 || parseInt(customBet) > balance) && styles.customBetButtonDisabled
-                    ]}
-                    onPress={handleCustomBet}
-                    disabled={!customBet || parseInt(customBet) <= 0 || parseInt(customBet) > balance}
-                  >
-                    <Text style={styles.customBetButtonText}>USTAW</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Блок цифр для кастомной ставки */}
-                <View style={styles.numberPad}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, '⌫', 0, 'C'].map((item) => (
-                    <TouchableOpacity
-                      key={item}
-                      style={styles.numberButton}
+                    <TouchableOpacity 
+                      style={styles.setButton}
                       onPress={() => {
-                        if (item === '⌫') {
-                          setCustomBet(prev => prev.slice(0, -1));
-                        } else if (item === 'C') {
-                          setCustomBet('');
-                          setBet(0);
-                        } else {
-                          setCustomBet(prev => {
-                            const newValue = prev + item;
-                            return newValue.length <= 6 ? newValue : prev;
-                          });
+                        const betValue = parseInt(customBet);
+                        if (!isNaN(betValue) && betValue > 0 && betValue <= balance) {
+                          setBet(betValue);
+                          Alert.alert('Stawka ustawiona', `Ustawiono stawkę: ${betValue} 💰`);
                         }
                       }}
                     >
-                      <Text style={styles.numberButtonText}>{item}</Text>
+                      <Text style={styles.setButtonText}>USTAW</Text>
                     </TouchableOpacity>
-                  ))}
+                  </View>
+
+                  {/* Маленькая цифровая клавиатура */}
+                  <View style={styles.numberGrid}>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, '⌫', 0, 'C'].map((item) => (
+                      <TouchableOpacity
+                        key={item}
+                        style={styles.numberButton}
+                        onPress={() => {
+                          if (item === '⌫') {
+                            setCustomBet(prev => prev.slice(0, -1));
+                          } else if (item === 'C') {
+                            setCustomBet('');
+                            setBet(0);
+                          } else {
+                            setCustomBet(prev => {
+                              const newValue = prev + item;
+                              return newValue.length <= 4 ? newValue : prev;
+                            });
+                          }
+                        }}
+                      >
+                        <Text style={styles.numberButtonText}>{item}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
 
-                {/* Информация о ставке */}
+                {/* Информация о текущем zakładzie */}
                 {selectedLanguage && bet > 0 && (
                   <View style={styles.betInfoCard}>
-                    <View style={styles.betInfoRow}>
-                      <Text style={styles.betInfoLabel}>Twój zakład:</Text>
-                      <Text style={styles.betInfoValue}>{selectedLanguage}</Text>
-                    </View>
-                    <View style={styles.betInfoRow}>
-                      <Text style={styles.betInfoLabel}>Stawka:</Text>
-                      <Text style={styles.betInfoValue}>{bet} 💰</Text>
-                    </View>
-                    <View style={styles.betInfoRow}>
-                      <Text style={styles.betInfoLabel}>Kurs:</Text>
-                      <Text style={styles.betInfoValue}>{odds[selectedLanguage]}x</Text>
-                    </View>
-                    <View style={styles.betInfoRow}>
-                      <Text style={styles.betInfoLabel}>Potencjalna wygrana:</Text>
-                      <Text style={styles.potentialWin}>
-                        {Math.floor(bet * parseFloat(odds[selectedLanguage]))} 💰
-                      </Text>
-                    </View>
+                    <Text style={styles.betInfoText}>
+                      Twój zakład: <Text style={styles.betInfoHighlight}>{selectedLanguage}</Text>
+                    </Text>
+                    <Text style={styles.betInfoText}>
+                      Stawka: <Text style={styles.betInfoHighlight}>{bet} 💰</Text>
+                    </Text>
+                    <Text style={styles.betInfoText}>
+                      Kurs: <Text style={styles.betInfoHighlight}>{odds[selectedLanguage]}x</Text>
+                    </Text>
+                    <Text style={styles.potentialWin}>
+                      Możliwa wygrana: {Math.floor(bet * parseFloat(odds[selectedLanguage]))} 💰
+                    </Text>
+                  </View>
+                )}
+
+                {/* Большая кнопка старта */}
+                <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                  <TouchableOpacity
+                    style={[
+                      styles.startButtonBig,
+                      (!selectedLanguage || bet === 0) && styles.startButtonDisabled
+                    ]}
+                    onPress={startRace}
+                    disabled={!selectedLanguage || bet === 0}
+                  >
+                    <Text style={styles.startButtonTextBig}>🏁 ROZPOCZNIJ WYŚCIG!</Text>
+                    {bet > 0 && (
+                      <Text style={styles.startButtonSubtext}>STAWKA: {bet} 💰</Text>
+                    )}
+                  </TouchableOpacity>
+                </Animated.View>
+              </View>
+            ) : (
+              <View style={styles.raceControls}>
+                {/* Информация о текущем zakładzie во время гонки */}
+                <View style={styles.currentBetCard}>
+                  <Text style={styles.currentBetTitle}>TWÓJ ZAKŁAD</Text>
+                  <View style={styles.betDetailsRow}>
+                    <Text style={styles.betDetail}>{selectedLanguage}</Text>
+                    <Text style={styles.betDetail}>{bet} 💰</Text>
+                    <Text style={styles.betDetail}>{odds[selectedLanguage]}x</Text>
+                  </View>
+                </View>
+
+                {running ? (
+                  <View style={styles.raceStatusCard}>
+                    <Text style={styles.raceStatusText}>🎬 WYŚCIG W TRAKCIE...</Text>
+                    <Text style={styles.roundInfoText}>Runda {currentRound}/4</Text>
+                  </View>
+                ) : (
+                  <View style={styles.raceFinished}>
+                    <TouchableOpacity
+                      style={styles.newRaceButtonBig}
+                      onPress={resetRace}
+                    >
+                      <Text style={styles.newRaceButtonText}>🏁 NOWY WYŚCIG</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={styles.homeButtonBottom}
+                      onPress={() => navigation.navigate('Home')}
+                    >
+                      <Text style={styles.homeButtonBottomText}>🏠 MENU GŁÓWNE</Text>
+                    </TouchableOpacity>
                   </View>
                 )}
               </View>
-
-              {/* Кнопка старта */}
-              <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-                <TouchableOpacity
-                  style={[
-                    styles.startButton,
-                    (!selectedLanguage || bet === 0) && styles.startButtonDisabled
-                  ]}
-                  onPress={startRace}
-                  disabled={!selectedLanguage || bet === 0}
-                >
-                  <Text style={styles.startButtonText}>🏁 ROZPOCZNIJ WYŚCIG!</Text>
-                  <Text style={styles.startButtonSubtext}>STAWKA: {bet} 💰</Text>
-                </TouchableOpacity>
-              </Animated.View>
-            </View>
-          ) : (
-            <View style={styles.raceControls}>
-              <View style={styles.currentBetInfo}>
-                <Text style={styles.currentBetLabel}>TWÓJ ZAKŁAD:</Text>
-                <View style={styles.betDetails}>
-                  <View style={styles.betDetailItem}>
-                    <Text style={styles.betDetailLabel}>Język:</Text>
-                    <Text style={styles.betDetailValue}>{selectedLanguage}</Text>
-                  </View>
-                  <View style={styles.betDetailItem}>
-                    <Text style={styles.betDetailLabel}>Stawka:</Text>
-                    <Text style={styles.betDetailValue}>{bet} 💰</Text>
-                  </View>
-                  <View style={styles.betDetailItem}>
-                    <Text style={styles.betDetailLabel}>Kurs:</Text>
-                    <Text style={styles.betDetailValue}>{odds[selectedLanguage]}x</Text>
-                  </View>
-                </View>
-              </View>
-
-              {running ? (
-                <View style={styles.raceStatus}>
-                  <Text style={styles.raceStatusText}>🎬 WYŚCIG W TRAKCIE...</Text>
-                  <View style={styles.progressAnimation}>
-                    <View style={[styles.progressDot, styles.progressDot1]} />
-                    <View style={[styles.progressDot, styles.progressDot2]} />
-                    <View style={[styles.progressDot, styles.progressDot3]} />
-                  </View>
-                </View>
-              ) : (
-                <TouchableOpacity
-                  style={styles.newRaceButton}
-                  onPress={resetRace}
-                >
-                  <Text style={styles.newRaceButtonText}>🏁 NOWY WYŚCIG</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-
-          {/* Статистика */}
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statIcon}>🎮</Text>
-              <Text style={styles.statValue}>{raceGames}</Text>
-              <Text style={styles.statLabel}>WYŚCIGI</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statIcon}>🏆</Text>
-              <Text style={styles.statValue}>{raceWins}</Text>
-              <Text style={styles.statLabel}>WYGRANE</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statIcon}>📈</Text>
-              <Text style={styles.statValue}>
-                {raceGames > 0 ? ((raceWins / raceGames) * 100).toFixed(1) : 0}%
-              </Text>
-              <Text style={styles.statLabel}>W/L</Text>
-            </View>
+            )}
           </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -675,16 +657,16 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(155, 89, 182, 0.2)',
   },
   backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backButtonText: {
     color: '#9B59B6',
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
   },
   headerInfo: {
@@ -693,7 +675,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   title: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '900',
     color: '#9B59B6',
     letterSpacing: 1,
@@ -705,28 +687,30 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     color: '#8A8D93',
-    fontSize: 11,
+    fontSize: 12,
     marginRight: 5,
   },
   balanceAmount: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
   },
-  profileButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  homeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  profileButtonText: {
+  homeButtonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 20,
   },
   raceArea: {
     flex: 1,
+  },
+  raceContent: {
     padding: 15,
   },
   raceHeader: {
@@ -737,26 +721,26 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '900',
     color: '#9B59B6',
-    letterSpacing: 2,
+    letterSpacing: 1,
     textShadowColor: 'rgba(155, 89, 182, 0.3)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
   },
   raceSubtitle: {
     color: '#8A8D93',
-    fontSize: 12,
+    fontSize: 14,
     marginTop: 4,
   },
   roundInfo: {
     backgroundColor: 'rgba(155, 89, 182, 0.1)',
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 12,
     marginBottom: 15,
     alignItems: 'center',
   },
   roundText: {
     color: '#9B59B6',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     marginBottom: 8,
   },
@@ -851,7 +835,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: 'hidden',
     position: 'relative',
-    marginBottom: 8,
   },
   progressTrack: {
     position: 'absolute',
@@ -878,32 +861,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlignVertical: 'center',
   },
-  indicators: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  selectedIndicator: {
-    backgroundColor: 'rgba(155, 89, 182, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  selectedIndicatorText: {
-    color: '#9B59B6',
-    fontSize: 8,
-    fontWeight: '700',
-  },
-  winnerIndicator: {
-    backgroundColor: 'rgba(46, 213, 115, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  winnerIndicatorText: {
-    color: '#2ED573',
-    fontSize: 8,
-    fontWeight: '700',
-  },
   resultsCard: {
     backgroundColor: 'rgba(155, 89, 182, 0.1)',
     borderRadius: 12,
@@ -912,7 +869,7 @@ const styles = StyleSheet.create({
   },
   resultsTitle: {
     color: '#9B59B6',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     marginBottom: 10,
     letterSpacing: 1,
@@ -938,7 +895,7 @@ const styles = StyleSheet.create({
   },
   finalWinner: {
     color: '#FFD700',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '900',
     textAlign: 'center',
     marginTop: 5,
@@ -973,76 +930,70 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     marginTop: 2,
   },
+  // Панель управления
   controlPanel: {
     backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     padding: 15,
-    maxHeight: height * 0.6,
-  },
-  bettingPanel: {
-    flex: 1,
-  },
-  selectionSection: {
-    marginBottom: 15,
   },
   sectionTitle: {
     color: '#8A8D93',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
     marginBottom: 10,
-    letterSpacing: 1,
+    marginTop: 5,
   },
-  languageScroll: {
-    marginHorizontal: -15,
-    paddingHorizontal: 15,
+  // Большие кнопки языков
+  languageGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 15,
   },
-  languageButton: {
-    width: 100,
+  languageButtonBig: {
+    width: width * 0.22,
     backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderRadius: 12,
     padding: 12,
-    marginRight: 10,
+    marginBottom: 10,
     borderWidth: 2,
+    alignItems: 'center',
   },
   languageButtonSelected: {
     backgroundColor: 'rgba(155, 89, 182, 0.1)',
     borderWidth: 3,
   },
-  languageButtonContent: {
-    alignItems: 'center',
-  },
-  languageButtonIcon: {
+  languageButtonIconBig: {
     fontSize: 28,
     marginBottom: 8,
   },
-  languageButtonName: {
+  languageButtonNameBig: {
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
     marginBottom: 4,
     textAlign: 'center',
   },
-  languageButtonOdds: {
+  languageButtonOddsBig: {
     color: '#FFD700',
     fontSize: 14,
     fontWeight: '900',
   },
-  betSection: {
+  // Быстрые ставки - большие кнопки
+  quickBetsGrid: {
     marginBottom: 15,
   },
-  quickBetsContainer: {
+  quickBetsRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 8,
-    marginBottom: 15,
+    marginBottom: 10,
   },
-  quickBetButton: {
-    width: width * 0.28,
+  quickBetButtonBig: {
+    width: width * 0.3,
     backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderRadius: 10,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
@@ -1055,32 +1006,33 @@ const styles = StyleSheet.create({
   quickBetButtonDisabled: {
     opacity: 0.4,
   },
-  quickBetText: {
+  quickBetTextBig: {
     color: '#8A8D93',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
   },
   quickBetTextSelected: {
     color: '#9B59B6',
     fontWeight: '900',
-    fontSize: 16,
+    fontSize: 18,
   },
-  customBetContainer: {
+  // Кастомная ставка
+  customBetSection: {
+    marginBottom: 15,
+  },
+  customBetRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
-    gap: 10,
-  },
-  customBetInputContainer: {
-    flex: 1,
+    marginBottom: 10,
   },
   customBetLabel: {
     color: '#8A8D93',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
-    marginBottom: 5,
+    marginRight: 10,
   },
   customBetInputWrapper: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -1089,6 +1041,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginRight: 10,
   },
   customBetPrefix: {
     color: '#FFD700',
@@ -1101,35 +1054,30 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '700',
-    minHeight: 24,
   },
-  customBetButton: {
+  setButton: {
     backgroundColor: '#9B59B6',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 10,
-    marginTop: 20,
   },
-  customBetButtonDisabled: {
-    backgroundColor: 'rgba(155, 89, 182, 0.3)',
-  },
-  customBetButtonText: {
+  setButtonText: {
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '900',
   },
-  numberPad: {
+  // Цифровая клавиатура
+  numberGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: 8,
-    marginBottom: 15,
   },
   numberButton: {
-    width: width * 0.18,
-    height: 50,
+    width: width * 0.12,
+    height: 40,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 10,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -1137,41 +1085,38 @@ const styles = StyleSheet.create({
   },
   numberButtonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
   },
+  // Информация о ставке
   betInfoCard: {
     backgroundColor: 'rgba(255, 215, 0, 0.1)',
     borderRadius: 12,
     padding: 15,
-    marginTop: 10,
+    marginBottom: 15,
     borderWidth: 1,
     borderColor: 'rgba(255, 215, 0, 0.2)',
   },
-  betInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  betInfoLabel: {
-    color: '#8A8D93',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  betInfoValue: {
+  betInfoText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '700',
+    marginBottom: 5,
+  },
+  betInfoHighlight: {
+    color: '#FFD700',
+    fontWeight: '900',
   },
   potentialWin: {
     color: '#FFD700',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '900',
+    marginTop: 5,
+    textAlign: 'center',
   },
-  startButton: {
+  // Большая кнопка старта
+  startButtonBig: {
     backgroundColor: '#9B59B6',
-    paddingVertical: 18,
+    paddingVertical: 20,
     borderRadius: 15,
     alignItems: 'center',
     shadowColor: '#9B59B6',
@@ -1182,52 +1127,45 @@ const styles = StyleSheet.create({
   startButtonDisabled: {
     backgroundColor: 'rgba(155, 89, 182, 0.3)',
   },
-  startButtonText: {
+  startButtonTextBig: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '900',
     letterSpacing: 1,
-    marginBottom: 4,
+    marginBottom: 5,
   },
   startButtonSubtext: {
     color: 'rgba(255, 255, 255, 0.8)',
     fontSize: 14,
     fontWeight: '600',
   },
+  // Во время гонки
   raceControls: {
-    flex: 1,
+    marginTop: 5,
   },
-  currentBetInfo: {
+  currentBetCard: {
     backgroundColor: 'rgba(155, 89, 182, 0.1)',
     borderRadius: 12,
     padding: 15,
-    marginBottom: 12,
+    marginBottom: 15,
   },
-  currentBetLabel: {
-    color: '#8A8D93',
-    fontSize: 12,
-    fontWeight: '600',
+  currentBetTitle: {
+    color: '#9B59B6',
+    fontSize: 14,
+    fontWeight: '700',
     marginBottom: 10,
+    textAlign: 'center',
   },
-  betDetails: {
+  betDetailsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  betDetailItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  betDetailLabel: {
-    color: '#8A8D93',
-    fontSize: 10,
-    marginBottom: 4,
-  },
-  betDetailValue: {
+  betDetail: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
   },
-  raceStatus: {
+  raceStatusCard: {
     backgroundColor: 'rgba(255, 215, 0, 0.1)',
     borderRadius: 12,
     padding: 20,
@@ -1235,38 +1173,19 @@ const styles = StyleSheet.create({
   },
   raceStatusText: {
     color: '#FFD700',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '900',
-    marginBottom: 15,
+    marginBottom: 10,
   },
-  progressAnimation: {
-    flexDirection: 'row',
+  roundInfoText: {
+    color: '#8A8D93',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  raceFinished: {
     gap: 10,
   },
-  progressDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#FFD700',
-  },
-  progressDot1: {
-    animation: 'pulse',
-    animationDuration: '1s',
-    animationIterationCount: 'infinite',
-  },
-  progressDot2: {
-    animation: 'pulse',
-    animationDuration: '1s',
-    animationDelay: '0.2s',
-    animationIterationCount: 'infinite',
-  },
-  progressDot3: {
-    animation: 'pulse',
-    animationDuration: '1s',
-    animationDelay: '0.4s',
-    animationIterationCount: 'infinite',
-  },
-  newRaceButton: {
+  newRaceButtonBig: {
     backgroundColor: '#2ED573',
     paddingVertical: 18,
     borderRadius: 12,
@@ -1274,37 +1193,20 @@ const styles = StyleSheet.create({
   },
   newRaceButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '900',
   },
-  statsContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    borderRadius: 10,
-    padding: 12,
-    marginTop: 15,
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statIcon: {
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  statValue: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  statLabel: {
-    color: '#8A8D93',
-    fontSize: 8,
-  },
-  statDivider: {
-    width: 1,
+  homeButtonBottom: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingVertical: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  homeButtonBottomText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
