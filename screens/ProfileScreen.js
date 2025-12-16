@@ -9,121 +9,75 @@ import {
   SafeAreaView,
   Alert,
   Dimensions,
-  Animated,
-  TextInput
+  Animated
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 export default function ProfileScreen({
   navigation,
-  balance,
-  setBalance,
-  slotGames,
-  slotWins,
-  slotHistory,
-  bjGames,
-  bjWins,
-  bjHistory,
-  raceGames,
-  raceWins,
-  raceHistory
+  balance, setBalance,
+  slotGames, slotWins, slotHistory,
+  bjGames, bjWins, bjHistory,
+  raceGames, raceWins, raceHistory
 }) {
   const [avatar, setAvatar] = useState(null);
-  const [playerName, setPlayerName] = useState('Gracz VIP');
   const [selectedTab, setSelectedTab] = useState('stats');
   const [totalGames, setTotalGames] = useState(0);
   const [totalWins, setTotalWins] = useState(0);
-  const [level, setLevel] = useState(1);
-  const [achievements, setAchievements] = useState({});
   const [creditScale] = useState(new Animated.Value(1));
 
-  // Загрузка всего при старте
+  // Обновление общей статистики
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const savedAvatar = await AsyncStorage.getItem('avatarImage');
-        const savedName = await AsyncStorage.getItem('playerName');
-        const savedBalance = await AsyncStorage.getItem('playerBalance');
-        const savedAchievements = await AsyncStorage.getItem('achievements');
-        const savedLevel = await AsyncStorage.getItem('playerLevel');
+    setTotalGames(slotGames + bjGames + raceGames);
+    setTotalWins(slotWins + bjWins + raceWins);
+  }, [slotGames, bjGames, raceGames, slotWins, bjWins, raceWins]);
 
-        if (savedAvatar) setAvatar(savedAvatar);
-        if (savedName) setPlayerName(savedName);
-        if (savedBalance) setBalance(Number(savedBalance));
-        if (savedAchievements) setAchievements(JSON.parse(savedAchievements));
-        if (savedLevel) setLevel(Number(savedLevel));
-      } catch (err) {
-        console.log('Error loading profile', err);
+  // Загрузка аватара из памяти
+  useEffect(() => {
+    const loadAvatar = async () => {
+      try {
+        const saved = await AsyncStorage.getItem('avatarImage');
+        if (saved) setAvatar(saved);
+      } catch (error) {
+        console.log('Error loading avatar:', error);
       }
     };
-    loadProfile();
+    loadAvatar();
   }, []);
 
-  // Автоматическое обновление статистики
-  useEffect(() => {
-    const updateStats = () => {
-      const games = slotGames + bjGames + raceGames;
-      const wins = slotWins + bjWins + raceWins;
-      setTotalGames(games);
-      setTotalWins(wins);
-
-      const newLevel = Math.floor(games / 10) + 1;
-      setLevel(newLevel);
-      AsyncStorage.setItem('playerLevel', newLevel.toString());
-
-      // Обновление ачивок
-      const newAch = {
-        slot10: slotGames >= 10,
-        bj5: bjWins >= 5,
-        balance1k: balance >= 1000,
-        wins10: wins >= 10,
-      };
-      setAchievements(newAch);
-      AsyncStorage.setItem('achievements', JSON.stringify(newAch));
-    };
-
-    updateStats(); // Вызываем сразу при изменении данных
-  }, [slotGames, bjGames, raceGames, slotWins, bjWins, raceWins, balance]);
-
-  // Сохранение изменений
+  // Сохранение аватара
   const saveAvatar = async (uri) => {
-    setAvatar(uri);
-    await AsyncStorage.setItem('avatarImage', uri);
+    try {
+      setAvatar(uri);
+      await AsyncStorage.setItem('avatarImage', uri);
+    } catch (error) {
+      console.log('Error saving avatar:', error);
+    }
   };
 
-  const saveName = async (name) => {
-    setPlayerName(name);
-    await AsyncStorage.setItem('playerName', name);
-  };
-
-  const saveBalance = async (amount) => {
-    setBalance(amount);
-    await AsyncStorage.setItem('playerBalance', amount.toString());
-  };
-
-  // Выбор аватара
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Brak uprawnień', 'Potrzebujemy dostępu do galerii.');
+      Alert.alert('Brak uprawnień', 'Potrzebujemy dostępu do galerii, aby zmienić zdjęcie.');
       return;
     }
-
+    
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
     });
-
-    if (!result.canceled) saveAvatar(result.assets[0].uri);
+    
+    if (!result.canceled) {
+      saveAvatar(result.assets[0].uri);
+    }
   };
 
-  // VIP кредит
   const takeCredit = () => {
     Animated.sequence([
       Animated.timing(creditScale, {
@@ -137,15 +91,19 @@ export default function ProfileScreen({
         useNativeDriver: true,
       }),
     ]).start();
-    const newBalance = balance + 1000;
-    saveBalance(newBalance);
-    Alert.alert('Kredyt VIP!', 'Dodano 1000 💰!');
+    
+    Alert.alert(
+      'Kredyt VIP!',
+      'Dodano 1000 💰 do twojego konta!',
+      [{ text: 'Dziękuję!', style: 'default' }]
+    );
+    setBalance(prev => prev + 1000);
   };
 
   // Рендер истории
   const renderHistory = (title, data, icon) => {
     const displayData = data.slice(-10).reverse();
-
+    
     return (
       <View style={styles.historyCard}>
         <View style={styles.historyHeader}>
@@ -153,25 +111,19 @@ export default function ProfileScreen({
           <Text style={styles.historyTitle}>{title}</Text>
           <Text style={styles.historyCount}>({displayData.length})</Text>
         </View>
-
+        
         {displayData.length > 0 ? (
           <ScrollView style={styles.historyList}>
             {displayData.map((item, index) => (
               <View key={index} style={styles.historyItem}>
                 <View style={styles.historyNumber}>
-                  <Text style={styles.historyNumberText}>
-                    #{displayData.length - index}
-                  </Text>
+                  <Text style={styles.historyNumberText}>#{displayData.length - index}</Text>
                 </View>
-                <Text
-                  style={[
-                    styles.historyText,
-                    item.includes('Win')
-                      ? styles.historyWin
-                      : item.includes('Lose')
-                      ? styles.historyLose
-                      : styles.historyDraw,
-                  ]}>
+                <Text style={[
+                  styles.historyText,
+                  item.includes('Win') ? styles.historyWin : 
+                  item.includes('Lose') ? styles.historyLose : styles.historyDraw
+                ]}>
                   {item}
                 </Text>
               </View>
@@ -194,13 +146,13 @@ export default function ProfileScreen({
           <Text style={styles.statNumber}>{totalGames}</Text>
           <Text style={styles.statLabel}>ŁĄCZNA LICZBA GIER</Text>
         </View>
-
+        
         <View style={styles.statCard}>
           <Text style={styles.statIcon}>🏆</Text>
           <Text style={styles.statNumber}>{totalWins}</Text>
           <Text style={styles.statLabel}>WYGRANYCH GIER</Text>
         </View>
-
+        
         <View style={styles.statCard}>
           <Text style={styles.statIcon}>📊</Text>
           <Text style={styles.statNumber}>
@@ -286,13 +238,11 @@ export default function ProfileScreen({
           <Text style={styles.vipBadge}>VIP</Text>
         </View>
         <Text style={styles.balanceAmount}>{balance.toLocaleString()} 💰</Text>
-
+        
         {balance <= 1000 && (
           <Animated.View style={{ transform: [{ scale: creditScale }] }}>
             <TouchableOpacity style={styles.creditButton} onPress={takeCredit}>
-              <Text style={styles.creditButtonText}>
-                WEŹ KREDYT VIP +1000💰
-              </Text>
+              <Text style={styles.creditButtonText}>WEŹ KREDYT VIP +1000💰</Text>
             </TouchableOpacity>
           </Animated.View>
         )}
@@ -305,9 +255,7 @@ export default function ProfileScreen({
       <View style={styles.container}>
         {/* Шапка профиля */}
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.backButtonText}>‹</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>PROFIL GRACZA</Text>
@@ -330,23 +278,12 @@ export default function ProfileScreen({
                 <Ionicons name="camera" size={16} color="#FFFFFF" />
               </View>
             </TouchableOpacity>
-
+            
             <View style={styles.profileInfo}>
-              <TextInput
-                value={playerName}
-                onChangeText={saveName}
-                style={styles.playerNameInput}
-                placeholder="Wpisz swoje imię"
-                placeholderTextColor="rgba(255, 255, 255, 0.5)"
-              />
-              <Text style={styles.playerLevel}>Poziom: {level}</Text>
+              <Text style={styles.playerName}>Gracz VIP</Text>
+              <Text style={styles.playerLevel}>Poziom: {Math.floor(totalGames / 10) + 1}</Text>
               <View style={styles.levelBar}>
-                <View
-                  style={[
-                    styles.levelFill,
-                    { width: `${(totalGames % 10) * 10}%` },
-                  ]}
-                />
+                <View style={[styles.levelFill, { width: `${(totalGames % 10) * 10}%` }]} />
               </View>
               <Text style={styles.levelText}>
                 Do następnego poziomu: {10 - (totalGames % 10)} gier
@@ -358,27 +295,18 @@ export default function ProfileScreen({
           <View style={styles.tabsContainer}>
             <TouchableOpacity
               style={[styles.tab, selectedTab === 'stats' && styles.tabActive]}
-              onPress={() => setSelectedTab('stats')}>
-              <Text
-                style={[
-                  styles.tabText,
-                  selectedTab === 'stats' && styles.tabTextActive,
-                ]}>
+              onPress={() => setSelectedTab('stats')}
+            >
+              <Text style={[styles.tabText, selectedTab === 'stats' && styles.tabTextActive]}>
                 📊 STATYSTYKI
               </Text>
             </TouchableOpacity>
-
+            
             <TouchableOpacity
-              style={[
-                styles.tab,
-                selectedTab === 'history' && styles.tabActive,
-              ]}
-              onPress={() => setSelectedTab('history')}>
-              <Text
-                style={[
-                  styles.tabText,
-                  selectedTab === 'history' && styles.tabTextActive,
-                ]}>
+              style={[styles.tab, selectedTab === 'history' && styles.tabActive]}
+              onPress={() => setSelectedTab('history')}
+            >
+              <Text style={[styles.tabText, selectedTab === 'history' && styles.tabTextActive]}>
                 📋 HISTORIA
               </Text>
             </TouchableOpacity>
@@ -399,51 +327,47 @@ export default function ProfileScreen({
           <View style={styles.achievementsCard}>
             <Text style={styles.achievementsTitle}>🏆 OSIĄGNIĘCIA</Text>
             <View style={styles.achievementsGrid}>
-              <View
-                style={[
-                  styles.achievement,
-                  achievements.slot10 && styles.achievementUnlocked,
-                ]}>
+              <View style={[
+                styles.achievement,
+                slotGames >= 10 && styles.achievementUnlocked
+              ]}>
                 <Text style={styles.achievementIcon}>🎰</Text>
                 <Text style={styles.achievementText}>10 gier w sloty</Text>
                 <Text style={styles.achievementStatus}>
-                  {achievements.slot10 ? '✓' : `${slotGames}/10`}
+                  {slotGames >= 10 ? '✓' : `${slotGames}/10`}
                 </Text>
               </View>
-
-              <View
-                style={[
-                  styles.achievement,
-                  achievements.bj5 && styles.achievementUnlocked,
-                ]}>
+              
+              <View style={[
+                styles.achievement,
+                bjWins >= 5 && styles.achievementUnlocked
+              ]}>
                 <Text style={styles.achievementIcon}>🂡</Text>
                 <Text style={styles.achievementText}>5 wygranych w BJ</Text>
                 <Text style={styles.achievementStatus}>
-                  {achievements.bj5 ? '✓' : `${bjWins}/5`}
+                  {bjWins >= 5 ? '✓' : `${bjWins}/5`}
                 </Text>
               </View>
-
-              <View
-                style={[
-                  styles.achievement,
-                  achievements.balance1k && styles.achievementUnlocked,
-                ]}>
+              
+              <View style={[
+                styles.achievement,
+                balance >= 1000 && styles.achievementUnlocked
+              ]}>
                 <Text style={styles.achievementIcon}>💰</Text>
                 <Text style={styles.achievementText}>1000+ monet</Text>
                 <Text style={styles.achievementStatus}>
-                  {achievements.balance1k ? '✓' : `${balance}/1000`}
+                  {balance >= 1000 ? '✓' : `${balance}/1000`}
                 </Text>
               </View>
-
-              <View
-                style={[
-                  styles.achievement,
-                  achievements.wins10 && styles.achievementUnlocked,
-                ]}>
+              
+              <View style={[
+                styles.achievement,
+                totalWins >= 10 && styles.achievementUnlocked
+              ]}>
                 <Text style={styles.achievementIcon}>🏆</Text>
                 <Text style={styles.achievementText}>10 wygranych</Text>
                 <Text style={styles.achievementStatus}>
-                  {achievements.wins10 ? '✓' : `${totalWins}/10`}
+                  {totalWins >= 10 ? '✓' : `${totalWins}/10`}
                 </Text>
               </View>
             </View>
@@ -464,17 +388,12 @@ export default function ProfileScreen({
             <Text style={styles.infoText}>
               • Poziom rośnie co 10 rozegranych gier
             </Text>
-            <Text style={styles.infoText}>
-              • Kliknij na imię, aby je zmienić
-            </Text>
           </View>
 
           {/* Футер */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>© 2024 Royal Casino</Text>
-            <Text style={styles.footerText}>
-              ID Gracza: VIP-{Date.now().toString().slice(-6)}
-            </Text>
+            <Text style={styles.footerText}>ID Gracza: VIP-{Date.now().toString().slice(-6)}</Text>
             <Text style={styles.footerText}>Wersja 1.0.0</Text>
           </View>
         </ScrollView>
@@ -576,17 +495,11 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 20,
   },
-  playerNameInput: {
+  playerName: {
     fontSize: 20,
     fontWeight: '900',
     color: '#FFFFFF',
     marginBottom: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(116, 185, 255, 0.3)',
   },
   playerLevel: {
     fontSize: 12,

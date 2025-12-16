@@ -4,11 +4,11 @@ import React from 'react';
 import HomeScreen from '../screens/HomeScreen';
 
 test('przycisk do slot machine działa', () => {
-  const { getByText } = render(<HomeScreen navigation={{ navigate: jest.fn() }} />);
-  expect(getByText('Zagraj w jednorękiego bandytę')).toBeTruthy();
+  const { getByText } = render(<HomeScreen navigation={{ navigate: jest.fn() }} balance={1000} />);
+  expect(getByText('Jednoręki bandyta')).toBeTruthy();
 });
 
 test('przycisk do profilu działa', () => {
-  const { getByText } = render(<HomeScreen navigation={{ navigate: jest.fn() }} />);
-  expect(getByText('Mój profil')).toBeTruthy();
+  const { getByText } = render(<HomeScreen navigation={{ navigate: jest.fn() }} balance={1000} />);
+  expect(getByText('Profil gracza')).toBeTruthy();
 });
